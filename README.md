@@ -1,5 +1,5 @@
-**Sillycon Valley Hackathon hosted by UAIS
-**
+Sillycon Valley Hackathon hosted by UAIS
+
 Idea: Use Supervised Learning to train an AI to Determine the Probability of a Message being Flirtatious
 
 Input: A message (sentence)
