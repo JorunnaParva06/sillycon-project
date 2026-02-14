@@ -7,6 +7,22 @@ import numpy as np
 TRAINING_SET = 'datasets/flirtingdatawithpunc_80_percent.csv'
 TEST_SET = 'datasets/flirtingdatawithpunc_20_percent.csv'
 
+def sentencePredictor(sentence, vectorizer, model):
+    #Converts new sentence in a vector
+    vectorizedSentence = vectorizer.transform([sentence])
+
+    sparse_matrix = vectorizer.transform([sentence])
+    # feature_names = vectorizer.get_feature_names_out() # list of all grams
+
+    # Convert the sparse matrix to a dense matrix (i.e. a matrix of all grams extracted,associting each gram with a value. Non-zero values correspond to relevant grams)
+    dense_matrix = sparse_matrix.todense()
+    dense_matrix_list = dense_matrix.tolist()
+    msg_sum = sum(dense_matrix_list[0])
+
+     #Computes the probability that the sentence is flirtatious
+    probability = model.predict_proba(msg_sum)[0, 1]
+    return probability
+
 def extract_x(data):
     x = []
     for i in range(len(data)):
@@ -23,14 +39,6 @@ def main():
     x_train = extract_x(data)
     y_train = extract_y(data)
     vectorizer = TfidfVectorizer(lowercase = True, ngram_range = (1, 3), stop_words = "english")
-
-    # test_statements = [
-    #     "Hello Super Mario I think you are very beautiful",
-    #     "Hey Princess Peach I like your dress",
-    #     "Hi I am Bowser and I believe flowers are super beautiful just like you",
-    #     "Alrighty I am Bowser Junior and did you know that you are ugly",
-    #     "You are very stinky gross"
-    # ]
     
     sparse_matrix = vectorizer.fit_transform(x_train)
     # feature_names = vectorizer.get_feature_names_out() # list of all grams
@@ -68,6 +76,9 @@ def main():
     y_pred = model.predict(test_message_sums)
     # Determine how accurate our model is
     print("Accuracy:", accuracy_score(y_test, y_pred))
+
+    sentence = input("Enter your sentence: ")
+    print(f"There is a{sentencePredictor(sentence, vectorizer, model)*100}% chance that this message is flirtatious")
 
 if __name__ == "__main__":
     main()
