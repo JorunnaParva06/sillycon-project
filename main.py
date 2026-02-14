@@ -4,9 +4,10 @@ from sklearn.metrics import accuracy_score
 
 import pandas as pd
 import numpy as np
+import streamlit as st
+import time
 
-TRAINING_SET = 'datasets/flirtingdatawithpunc_80_percent.csv'
-TEST_SET = 'datasets/flirtingdatawithpunc_20_percent.csv'
+DATA_SET = 'datasets/flirtingdatawithpunctuation.csv'
 
 def sentencePredictor(sentence, vectorizer, model):
     #Convert the sentence to a vector
@@ -28,7 +29,7 @@ def extract_y(data):
     return y
   
 def main():
-    data = pd.read_csv(TRAINING_SET)
+    data = pd.read_csv(DATA_SET)
     x_train = extract_x(data)
     y_train = extract_y(data)
 
@@ -40,24 +41,47 @@ def main():
     model = LogisticRegression()
     model.fit(X_train, y_train)
 
-    #Test the data
-    test_data = pd.read_csv(TEST_SET)
-    x_test = extract_x(test_data)
-    y_test = extract_y(test_data)
-    X_test = vectorizer.transform(x_test)
+    # UI
+    st.markdown("<h1 style='text-align: center; font-size: 5rem; color: #FF0000;'>Rate My Rizz</h1>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; font-size: 2rem; color: #FF0000;'>Enter a pickup line and check its Rizz Level.</h2>", unsafe_allow_html=True)
 
-    #Make predictions for the test data
-    y_pred = model.predict(X_test)
+    # Define styles for bar
+    st.markdown("""
+    <style>
+    .stProgress > div > div > div > div {
+        background-image: linear-gradient(to right, white, pink, red);
+    }
 
-    #Determine how accurate our model is
-    #print("Accuracy:", accuracy_score(y_test, y_pred))
-    value = sentencePredictor(sentence, vectorizer, model)*200
-    if (value > 100):
-        value = 100
-    elif(value < 0):
-        value = 0
-    
+
+    .stProgress > div > div > div {
+        background-color: grey;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    progress_text = "Rizz Meter"
+    my_bar = st.progress(0, text=progress_text)
+   
+    pickup_line = st.text_input("Enter your text", "")
+    button = st.button("Check", type = "primary")
+    percent = 0
+
+    if button:  # Basically your onClick listener
+        # Get rizz percentage
+        percent = sentencePredictor(pickup_line, vectorizer, model)*200
+        if (percent > 100):
+            percent = 100
+        elif(percent < 0):
+            percent = 0
         
+        output = f"Your Rizz Level is: {int(percent)}%"
+        st.markdown(f"<h3 style='text-align: center; font-size: 2.5rem; color: #FF0000;'>Your Rizz Level is: {int(percent)}%</h3>", unsafe_allow_html=True)
+        #st.title(f"Your Rizz Level is: {int(percent)}%")  # Show the rizz percentage in numeric format
+
+    for percent_complete in range(int(percent)):
+        time.sleep(0.015)
+        my_bar.progress(percent_complete + 1, text=progress_text)
+        time.sleep(0.01)
 
 if __name__ == "__main__":
     main()
