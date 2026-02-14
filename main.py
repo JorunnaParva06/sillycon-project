@@ -9,8 +9,6 @@ TEST_SET = 'datasets/flirtingdatawithpunc_20_percent.csv'
 
 def sentencePredictor(sentence, vectorizer, model):
     #Converts new sentence in a vector
-    vectorizedSentence = vectorizer.transform([sentence])
-
     sparse_matrix = vectorizer.transform([sentence])
     # feature_names = vectorizer.get_feature_names_out() # list of all grams
 
@@ -20,7 +18,8 @@ def sentencePredictor(sentence, vectorizer, model):
     msg_sum = sum(dense_matrix_list[0])
 
      #Computes the probability that the sentence is flirtatious
-    probability = model.predict_proba(msg_sum)[0, 1]
+    probability = model.predict_proba([[msg_sum]])[0, 1]
+    # probability = model.predict([[msg_sum]])
     return probability
 
 def extract_x(data):
@@ -78,7 +77,7 @@ def main():
     print("Accuracy:", accuracy_score(y_test, y_pred))
 
     sentence = input("Enter your sentence: ")
-    print(f"There is a{sentencePredictor(sentence, vectorizer, model)*100}% chance that this message is flirtatious")
+    print(f"There is a {sentencePredictor(sentence, vectorizer, model)*100}% chance that this message is flirtatious")
 
 if __name__ == "__main__":
     main()
