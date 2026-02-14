@@ -1,25 +1,27 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
 import pandas as pd
-FILENAME = 'datasets/flirtingdatawithpunc_80_percent.csv'
+import numpy as np
+TRAINING_SET = 'datasets/flirtingdatawithpunc_80_percent.csv'
+TEST_SET = 'datasets/flirtingdatawithpunc_20_percent.csv'
 
 def extract_x(data):
     x = []
     for i in range(len(data)):
-        x.append(data.iloc[i][1])
+        x.append(data.at[i, 'final_messages'])
     return x
 def extract_y(data):
     y = []
     for i in range(len(data)):
-        y.append(data.iloc[i][0])
+        y.append(data.at[i, 'polarity'].item())
     return y
   
 def main():
-    data = pd.read_csv(FILENAME)
-    data.to_string()
+    data = pd.read_csv(TRAINING_SET)
     x_train = extract_x(data)
     y_train = extract_y(data)
-
     vectorizer = TfidfVectorizer(lowercase = True, ngram_range = (1, 3), stop_words = "english")
 
     # test_statements = [
@@ -29,29 +31,43 @@ def main():
     #     "Alrighty I am Bowser Junior and did you know that you are ugly",
     #     "You are very stinky gross"
     # ]
+    
+    sparse_matrix = vectorizer.fit_transform(x_train)
+    # feature_names = vectorizer.get_feature_names_out() # list of all grams
 
-    sparse_matrix = vectorizer.fit_transform(test_statements)
-    feature_names = vectorizer.get_feature_names_out()
-
-    # Convert the sparse matrix to a dense matrix
+    # Convert the sparse matrix to a dense matrix (i.e. a matrix of all grams extracted,associting each gram with a value. Non-zero values correspond to relevant grams)
     dense_matrix = sparse_matrix.todense()
     dense_matrix_list = dense_matrix.tolist()
-    print(dense_matrix_list)  # Non-zero values correspond to relevant words
+    # print(dense_matrix_list)  
 
-    all_keywords = []
+    message_sums = []
+    # Sum the ngram values for each message
+    for message in dense_matrix_list:
+        msg_sum = sum(message)
+        message_sums.append([msg_sum])
 
-    # Extracting the ngrams from each sentence
-    for text in dense_matrix_list:
-        index = 0
-        keywords = []
-        for word in text:
-            if word > 0:  # If it's an actual word that matters, keep track of it
-                keywords.append(feature_names[index])
-            index += 1
-        all_keywords.append(keywords)
-    print(all_keywords)  # Only showing relevant ngrams, so many ommited (they have a TFIDF value of 0.0)
-    
+    # Create and train the model    
     model = LogisticRegression()
-    model.fit(x_train,y_train)
+    model.fit(message_sums, y_train)
+
+    # repeat the above training steps but for the test data
+    test_data = pd.read_csv(TEST_SET)
+    x_test = extract_x(test_data)
+    y_test = extract_y(test_data)
+
+    test_sparse_mtrx = vectorizer.transform(x_test)
+    test_dense_matrix = test_sparse_mtrx.todense()
+    test_dense_mtrx_list = test_dense_matrix.tolist()
+    test_message_sums = []
+
+    for message in test_dense_mtrx_list:
+        msg_sum = sum(message)
+        test_message_sums.append([msg_sum])
+
+    # Make predictions for the test data
+    y_pred = model.predict(test_message_sums)
+    # Determine how accurate our model is
+    print("Accuracy:", accuracy_score(y_test, y_pred))
+
 if __name__ == "__main__":
     main()
